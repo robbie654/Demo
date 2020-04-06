@@ -1,5 +1,6 @@
 CREATE COMPUTE MODULE Transformation_Compute
 	CREATE FUNCTION Main() RETURNS BOOLEAN
+	-- Author: Robbie O'Neill
 	BEGIN
 		CALL CopyMessageHeaders();
 		-- CALL CopyEntireMessage();
