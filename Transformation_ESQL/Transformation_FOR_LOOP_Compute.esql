@@ -1,0 +1,65 @@
+
+
+CREATE COMPUTE MODULE Transformation_FOR_LOOP_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+	DECLARE inRef 		REFERENCE TO InputRoot;
+	DECLARE outRef, outMQMDRef 		REFERENCE TO OutputRoot;	
+	
+	-- set MQ Message Descriptor
+	SET outMQMDRef.MQMD=inRef.MQMD;
+	
+	-- Create a last child of the output root
+	-- We're asking for a parser folder to be created (initialising our output message...)
+	-- DOMAIN identifies the parser that will be used to parse the message out of message broker
+	CREATE LASTCHILD OF outRef AS outRef DOMAIN 'XMLNSC' NAME 'XMLNSC';	
+	
+	-- Next'Create' a 'Data' child element 'type' = Name
+	CREATE LASTCHILD OF outRef AS outRef TYPE Name NAME 'Data';
+		
+	--Set the field values that will be used by the For loop
+	SET Environment.SourceData.Folder[1].Field1 = 'Field11Value';
+	SET Environment.SourceData.Folder[2].Field1 = 'Field12Value';
+	SET Environment.SourceData.Folder[3].Field1 = 'Field31Value';
+	SET Environment.SourceData.Folder[1].Field2 = 'Field21Value';
+	SET Environment.SourceData.Folder[2].Field2 = 'Field22Value';
+	SET Environment.SourceData.Folder[3].Field2 = 'Field32Value';
+	
+	--set the loop counter
+	DECLARE i INTEGER 1;
+	--Loop around the Source Data folders we created above
+	--place Field values into the output Folder
+	FOR source AS Environment.SourceData.Folder[] DO
+     	CREATE LASTCHILD OF outRef.ResultData.MessageArrayTest.Folder[i] 
+            	NAME 'FieldA' VALUE ': ' || UPPER(source.Field1) || ': ' || CAST(i AS CHAR);
+
+     	CREATE LASTCHILD OF outRef.ResultData.MessageArrayTest.Folder[i] 
+            	NAME 'FieldB' VALUE ': ' || source.Field2 || ': ' || CAST(i AS CHAR);
+            	
+        CREATE LASTCHILD OF outRef.ResultData.MessageArrayTest.Folder[i] 
+            	NAME 'FieldC' VALUE ': ' || source.Field3 || ': ' || CAST(i AS CHAR);
+				
+		CREATE LASTCHILD OF outRef.ResultData.MessageArrayTest.Folder[i] NAME 'FieldC' VALUE ': ' || source.Field3 || ': ' || CAST(i AS CHAR);
+        SET scratchPad.Field3Values.Field[i] = source.Field3;    	 
+		
+     	SET i = i + 1; --increment loop counter 
+	END FOR; -- end FOR loop
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;
