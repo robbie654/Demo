@@ -1,0 +1,29 @@
+
+
+
+
+/* ESQL for Compute node */
+
+CREATE COMPUTE MODULE Compute_Complaint_ID_and_Department
+  CREATE FUNCTION Main() RETURNS BOOLEAN
+    BEGIN
+      
+      SET OutputRoot = InputRoot;
+
+      /* create the complaint reference ID by using the UUIDASCHAR function */
+      SET OutputRoot.XMLNSC.CUSTOMERCOMPLAINT.ADMIN.REFERENCE = 'COM' || UUIDASCHAR;
+		
+      /* assign the department to handle the complaint based on complaint type */
+      SET OutputRoot.XMLNSC.CUSTOMERCOMPLAINT.ADMIN.DEPT = 
+        CASE InputBody.CUSTOMERCOMPLAINT.COMPLAINT.C_TYPE
+           WHEN 'Order' THEN 'B01'
+           WHEN 'Delivery' THEN 'C01'
+           ELSE 'E01'
+        END;  /* case */
+		
+
+      RETURN TRUE;  /* propagate message to Out terminal */
+
+    END;  /* create function */
+
+END MODULE;
